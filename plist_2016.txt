@@ -1,0 +1,44 @@
+(0) Sequence: (show2016/Preshow.json, Music/Preshow.ogg)
+(1) Delay: 5000
+(2) Music: Music/Announcement1.ogg
+(3) Sequence: (show2016/(1) Jingle Breaks.json, Music/(1) Jingle Breaks.ogg)
+(4) Delay: 2000
+(5) Sequence: (show2016/(2) Feel Good.json, Music/(2) Feel Good.ogg)
+(6) Delay: 2000
+(7) Sequence: (show2016/(3) Collide.json, Music/(3) Collide.ogg)
+(8) Delay: 2000
+(9) Music: Music/Announcement2.ogg
+(10) Sequence: (show2016/(4) Unicorn Adventure.json, Music/(4) Unicorn Adventure_Master.ogg)
+(11) Delay: 2000
+(12) Sequence: (show2016/(5) Glory to the Bells.json, Music/(5) Glory to the Bells.ogg)
+(13) Music: Music/Announcement3.ogg
+(14) Sequence: (show2016/Midshow.json, Music/Midshow.ogg)
+(15) Delay: 5000
+(16) Music: Music/Announcement1.ogg
+(17) Sequence: (show2016/(1) Jingle Breaks.json, Music/(1) Jingle Breaks.ogg)
+(18) Delay: 2000
+(19) Sequence: (show2016/(2) Feel Good.json, Music/(2) Feel Good.ogg)
+(20) Delay: 2000
+(21) Sequence: (show2016/(3) Collide.json, Music/(3) Collide.ogg)
+(22) Delay: 2000
+(23) Music: Music/Announcement2.ogg
+(24) Sequence: (show2016/(4) Unicorn Adventure.json, Music/(4) Unicorn Adventure_Master.ogg)
+(25) Delay: 2000
+(26) Sequence: (show2016/(5) Glory to the Bells.json, Music/(5) Glory to the Bells.ogg)
+(27) Music: Music/Announcement3.ogg
+(28) Sequence: (show2016/Midshow.json, Music/Midshow.ogg)
+(29) Delay: 5000
+(30) Music: Music/Announcement1.ogg
+(31) Sequence: (show2016/(1) Jingle Breaks.json, Music/(1) Jingle Breaks.ogg)
+(32) Delay: 2000
+(33) Sequence: (show2016/(2) Feel Good.json, Music/(2) Feel Good.ogg)
+(34) Delay: 2000
+(35) Sequence: (show2016/(3) Collide.json, Music/(3) Collide.ogg)
+(36) Delay: 2000
+(37) Music: Music/Announcement2.ogg
+(38) Sequence: (show2016/(4) Unicorn Adventure.json, Music/(4) Unicorn Adventure_Master.ogg)
+(39) Delay: 2000
+(40) Sequence: (show2016/(5) Glory to the Bells.json, Music/(5) Glory to the Bells.ogg)
+(41) Music: Music/Announcement3.ogg
+(42) Sequence: (show2016/Preshow.json, Music/Preshow.ogg)
+
