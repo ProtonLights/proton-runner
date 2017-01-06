@@ -1,6 +1,7 @@
 extern crate rustc_serialize;
 extern crate serial as rserial;
 extern crate sfml;
+extern crate toml;
 
 pub mod commands;
 pub mod data;

@@ -1,4 +1,5 @@
 
+mod config;
 mod delay;
 mod music;
 mod pattern;
@@ -9,6 +10,7 @@ mod sequence;
 mod sequence_data;
 mod show;
 
+pub use self::config::Config;
 pub use self::delay::Delay;
 pub use self::music::Music;
 pub use self::pattern::Pattern;
