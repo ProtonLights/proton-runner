@@ -5,7 +5,7 @@ use std::io::Write;
 use rustc_serialize::json;
 
 use error::Error;
-use types::PlaylistItem;
+use types::{Config, PlaylistItem};
 use utils;
 
 
@@ -35,9 +35,9 @@ impl fmt::Display for Playlist {
 }
 
 impl Playlist {
-    pub fn write_to_file(&self) -> Result<(), Error> {
+    pub fn write_to_file(&self, cfg: &Config) -> Result<(), Error> {
         // Build playlist file path
-        let plist_path = Playlist::get_path(&self.name);
+        let plist_path = Playlist::get_path(cfg, &self.name);
 
         // Write playlist to file
         let plist_json = try!(json::encode(self).map_err(Error::JsonEncode));
@@ -50,16 +50,16 @@ impl Playlist {
             .map_err(Error::Io)
     }
 
-    fn get_path<'a>(proj_name: &'a str) -> String {
-        let mut playlist_path = String::from("Playlists/");
+    pub fn get_path(cfg: &Config, proj_name: &str) -> String {
+        let mut playlist_path = cfg.playlists_dir.clone();
         playlist_path.push_str(proj_name);
         playlist_path.push_str(".json");
         playlist_path
     }
 
-    pub fn get_playlist(proj_name: &str) -> Result<Playlist, Error> {
+    pub fn get_playlist(cfg: &Config, proj_name: &str) -> Result<Playlist, Error> {
         // Get path to file
-        let playlist_path = Playlist::get_path(proj_name);
+        let playlist_path = Playlist::get_path(cfg, proj_name);
 
         // Load playlist from file
         let plist_json = try!(utils::file_as_string(&playlist_path));
@@ -68,7 +68,7 @@ impl Playlist {
         json::decode(&plist_json).map_err(Error::JsonDecode)
     }
 
-    pub fn insert_item(&mut self, idx: usize, item: PlaylistItem) -> Result<(), Error> {
+    pub fn insert_item(&mut self, cfg: &Config, idx: usize, item: PlaylistItem) -> Result<(), Error> {
         // Insert item
         if idx > self.items.len() {
             let end = self.items.len();
@@ -80,10 +80,10 @@ impl Playlist {
         }
 
         // Write updated playlist to file
-        self.write_to_file()
+        self.write_to_file(cfg)
     }
 
-    pub fn remove_item(&mut self, idx: usize) -> Result<(), Error> {
+    pub fn remove_item(&mut self, cfg: &Config, idx: usize) -> Result<(), Error> {
         // Remove item
         if idx >= self.items.len() {
             let end = self.items.len();
@@ -95,6 +95,6 @@ impl Playlist {
         }
 
         // Write updated playlist to file
-        self.write_to_file()
+        self.write_to_file(cfg)
     }
 }

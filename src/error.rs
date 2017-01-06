@@ -1,9 +1,13 @@
 use rustc_serialize::json;
 use rserial;
 use std::{io, error, fmt};
+use toml;
+
 
 #[derive(Debug)]
 pub enum Error {
+    ConfigFieldMissing(String),
+    ConfigInvalidType(String, toml::Value),
     DmxTooLong(usize),
     EmptyData,
     FolderNotEmpty(String, usize),
@@ -19,11 +23,14 @@ pub enum Error {
     Rsfml(String),
     Serial(rserial::Error),
     TodoErr,
+    TomlParseError(toml::ParserError)
 }
 
 impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
+            Error::ConfigFieldMissing(_) => "Field missing from configuration file",
+            Error::ConfigInvalidType(_, _) => "Value in configuration file is invalid type",
             Error::DmxTooLong(_) => "DMX data too long to send",
             Error::EmptyData => "Empty data vector provided",
             Error::FolderNotEmpty(_, _) => "Root folder was not empty",
@@ -39,11 +46,14 @@ impl error::Error for Error {
             Error::Rsfml(_) => "Rsfml error occurred",
             Error::Serial(_) => "Serial error occurred",
             Error::TodoErr => "Todo",
+            Error::TomlParseError(_) => "Toml parsing error occurred",
         }
     }
 
     fn cause(&self) -> Option<&error::Error> {
         match *self {
+            Error::ConfigFieldMissing(_) => None,
+            Error::ConfigInvalidType(_, _) => None,
             Error::DmxTooLong(_) => None,
             Error::EmptyData => None,
             Error::FolderNotEmpty(_, _) => None,
@@ -59,6 +69,7 @@ impl error::Error for Error {
             Error::Rsfml(_) => None,
             Error::Serial(ref err) => Some(err),
             Error::TodoErr => None,
+            Error::TomlParseError(ref err) => Some(err),
        }
    }
 }
@@ -66,6 +77,10 @@ impl error::Error for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
+            Error::ConfigFieldMissing(ref field) => write!(f,
+                "Field missing from configuration field: {}", field),
+            Error::ConfigInvalidType(ref desired_type, ref toml_value) => write!(f,
+                "Config value not type {}: {}", desired_type, toml_value),
             Error::DmxTooLong(ref length) => write!(f,
                 "DMX data too long to send. Length: {}", length),
             Error::EmptyData => write!(f,
@@ -95,6 +110,8 @@ impl fmt::Display for Error {
             Error::Serial(ref err) => write!(f,
                 "Serial error occured: {}", err),
             Error::TodoErr => write!(f, "TodoErr"),
+            Error::TomlParseError(ref err) => write!(f,
+                "Toml parsing error occurred: {}", err),
         }
     }
 }

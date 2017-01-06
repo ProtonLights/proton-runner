@@ -1,3 +1,6 @@
+// Some commands don't use config
+#![allow(unused_variables)]
+
 extern crate docopt;
 extern crate proton_runner;
 extern crate rustc_serialize;
@@ -9,7 +12,7 @@ use docopt::Docopt;
 
 use proton_runner::DmxOutput;
 use proton_runner::error::Error;
-use proton_runner::types::{Playlist, Show};
+use proton_runner::types::{Config, Playlist, Show};
 
 
 const USAGE: &'static str = "
@@ -52,13 +55,14 @@ struct Args {
 }
 
 fn main() {
+    // Get command line arguments
     let args: Args = Docopt::new(USAGE)
         .and_then(|d| d.decode())
         .unwrap_or_else(|e| e.exit());
 
     // Below unwrap()'s are safe within Docopt's usage rules
-
-    let command: fn(Args) -> Result<(), Error> = match env::args().nth(1).unwrap().as_ref() {
+    // Match command to function to run
+    let command: fn(Args, Config) -> Result<(), Error> = match env::args().nth(1).unwrap().as_ref() {
         "add-playlist-item" => run_add_playlist_item,
         "allon" => run_all_on,
         "alloff" => run_all_off,
@@ -72,24 +76,31 @@ fn main() {
         _ => panic!("Invalid first argument"),
     };
 
-    let result = command(args);
+    // Read config file
+    let config = match Config::new("config.yaml") {
+        Ok(cfg) => cfg,
+        Err(e) => panic!("{:?}", e.to_string()),
+    };
+
+    // Run command's function
+    let result = command(args, config);
     match result {
         Ok(_) => println!("Worked!"),
         Err(e) => println!("{:?}", e.to_string()),
     };
 }
 
-fn run_add_playlist_item(args: Args) -> Result<(), Error> {
+fn run_add_playlist_item(args: Args, cfg: Config) -> Result<(), Error> {
     let proj_name = args.arg_proj_name.unwrap();
     let plist_idx = args.arg_plist_idx.unwrap();
     let seq_path = args.flag_seq;
     let music_path = args.flag_music;
     let duration = args.flag_dur;
 
-    proton_runner::playlist::add_item(&proj_name, plist_idx, seq_path, music_path, duration)
+    proton_runner::playlist::add_item(&cfg, &proj_name, plist_idx, seq_path, music_path, duration)
 }
 
-fn run_all_on(args: Args) -> Result<(), Error> {
+fn run_all_on(args: Args, cfg: Config) -> Result<(), Error> {
     let dmx_port = args.arg_dmx_port.unwrap();
     
     let mut dmx = try!(DmxOutput::new(&dmx_port));
@@ -97,7 +108,7 @@ fn run_all_on(args: Args) -> Result<(), Error> {
     proton_runner::commands::all_on(&mut dmx)
 }
 
-fn run_all_off(args: Args) -> Result<(), Error> {
+fn run_all_off(args: Args, cfg: Config) -> Result<(), Error> {
     let dmx_port = args.arg_dmx_port.unwrap();
     
     let mut dmx = try!(DmxOutput::new(&dmx_port));
@@ -105,13 +116,13 @@ fn run_all_off(args: Args) -> Result<(), Error> {
     proton_runner::commands::all_off(&mut dmx)
 }
 
-fn run_get_playlist(args: Args) -> Result<(), Error> {
+fn run_get_playlist(args: Args, cfg: Config) -> Result<(), Error> {
     let proj_name = args.arg_proj_name.unwrap();
-    let playlist = try!(Playlist::get_playlist(&proj_name));
+    let playlist = try!(Playlist::get_playlist(&cfg, &proj_name));
     Ok(println!("{}", playlist))
 }
 
-fn run_range_on(args: Args) -> Result<(), Error> {
+fn run_range_on(args: Args, cfg: Config) -> Result<(), Error> {
     let dmx_port = args.arg_dmx_port.unwrap();
     let chan_start = args.arg_chan_start.unwrap();
     let chan_end = args.arg_chan_end.unwrap();
@@ -123,7 +134,7 @@ fn run_range_on(args: Args) -> Result<(), Error> {
     proton_runner::commands::range_on(&mut dmx, start, end)
 }
 
-fn run_range_off(args: Args) -> Result<(), Error> {
+fn run_range_off(args: Args, cfg: Config) -> Result<(), Error> {
     let dmx_port = args.arg_dmx_port.unwrap();
     let chan_start = args.arg_chan_start.unwrap();
     let chan_end = args.arg_chan_end.unwrap();
@@ -135,19 +146,19 @@ fn run_range_off(args: Args) -> Result<(), Error> {
     proton_runner::commands::range_off(&mut dmx, start, end)
 }
 
-fn run_remove_playlist_item(args: Args) -> Result<(), Error> {
+fn run_remove_playlist_item(args: Args, cfg: Config) -> Result<(), Error> {
     let proj_name = args.arg_proj_name.unwrap();
     let plist_idx = args.arg_plist_idx.unwrap();
     
-    proton_runner::playlist::remove_item(&proj_name, plist_idx)
+    proton_runner::playlist::remove_item(&cfg, &proj_name, plist_idx)
 }
 
-fn run_run_show(args: Args) -> Result<(), Error> {
+fn run_run_show(args: Args, cfg: Config) -> Result<(), Error> {
     // Prepare show
     let proj_name = args.arg_proj_name.unwrap();
     let dmx_port = args.arg_dmx_port.unwrap();
     let plist_offset = args.arg_plist_offset.unwrap_or(0);
-    let show = try!(Show::new(&proj_name, &dmx_port, plist_offset));
+    let show = try!(Show::new(&cfg, &proj_name, &dmx_port, plist_offset));
     println!("Ready!");
 
     // Wait for user to run
@@ -160,7 +171,7 @@ fn run_run_show(args: Args) -> Result<(), Error> {
     }
 }
 
-fn run_set(args: Args) -> Result<(), Error> {
+fn run_set(args: Args, cfg: Config) -> Result<(), Error> {
 
     let dmx_port = args.arg_dmx_port.unwrap();
     let dmx_chan = args.arg_dmx_chan.unwrap();
@@ -176,9 +187,9 @@ fn run_set(args: Args) -> Result<(), Error> {
     }
 }
 
-fn run_update_data(args: Args) -> Result<(), Error> {
+fn run_update_data(args: Args, cfg: Config) -> Result<(), Error> {
     let proj_name = args.arg_proj_name.unwrap();
-    proton_runner::data::update_data(&proj_name)
+    proton_runner::data::update_data(&cfg, &proj_name)
 }
 
 /// Bind value to range [1, 512]

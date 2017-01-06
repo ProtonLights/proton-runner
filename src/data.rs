@@ -5,7 +5,7 @@ use std::process::Command;
 use std::str;
 
 use error::Error;
-use types::{Playlist, PlaylistItem, SequenceData};
+use types::{Config, Playlist, PlaylistItem, SequenceData};
 use utils;
 
 
@@ -67,28 +67,31 @@ fn get_data(proj_name: &str) -> Result<Vec<SequenceData>, Error> {
     Ok(transposed_data)
 }
 
+/// Gets the path to the project's output directory
+fn get_project_output_dir(cfg: &Config, proj_name: &str) -> String {
+    let mut proj_dir = cfg.output_dir.clone();
+    proj_dir.push_str(proj_name);
+    proj_dir.push_str(&"/");
+    proj_dir
+}
+
 /// Update the local copy of the show's sequence data
-pub fn update_data(proj_name: &str) -> Result<(), Error> {
+pub fn update_data(cfg: &Config, proj_name: &str) -> Result<(), Error> {
+    
     // Get new data
     let new_data = try!(get_data(proj_name));
-
-    // Make project directory if it doesn't exist
-    let _ = fs::create_dir(proj_name);
-
-    // Make Playlists directory if it doesn't exist
-    let _ = fs::create_dir("Playlists");
 
     // Write new data to files for offline use and save to playlist
     let mut plist_items = Vec::new();
     for sequence_data in new_data {
         // Build sequence data path
-        let mut seq_output_path = proj_name.to_string() + "/";
+        let mut seq_output_path = cfg.output_dir.clone();
         seq_output_path.push_str(&sequence_data.name);
         seq_output_path.push_str(&".json");
 
         // Build music file path if it exists
         let seq_music_path = sequence_data.music_file.clone().map(|music_file| {
-            let mut mus_path = "Music/".to_string();
+            let mut mus_path = cfg.music_dir.clone();
             mus_path.push_str(&music_file);
             mus_path
         });
@@ -117,7 +120,7 @@ pub fn update_data(proj_name: &str) -> Result<(), Error> {
 
     println!("Saving playlist...");
     // Write playlist
-    try!(plist.write_to_file());
+    try!(plist.write_to_file(cfg));
 
     Ok(())
 }

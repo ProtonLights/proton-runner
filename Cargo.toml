@@ -1,6 +1,6 @@
 [package]
 name = "proton_runner"
-version = "0.0.5"
+version = "0.0.6"
 authors = ["Ryan Fredlund <fredl027@umn.edu>", "Vladimir Kuksenko <kukse004@umn.edu>"]
 description = "Show runner for Proton"
 homepage = "https://github.com/teslaworksumn/proton-runner"

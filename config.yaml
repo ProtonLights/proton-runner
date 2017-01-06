@@ -1,0 +1,10 @@
+# Main output folder
+output_dir = "output/"
+
+# Output folder for playlist files (subdirectory of outputdir)
+playlists_dir = "output/playlists/"
+
+# Folder containing all audio files
+music_dir = "Music/"
+
+# DMX ports
