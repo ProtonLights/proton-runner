@@ -15,7 +15,7 @@ fn get_data(proj_name: &str) -> Result<Vec<SequenceData>, Error> {
     println!("Getting data from proton_cli...");
 
     // ./proton_cli get-playlist-data <proj-name>
-    let output = try!(Command::new("./proton_cli")
+    let output = try!(Command::new("./bin/proton_cli")
         .arg("get-playlist-data")
         .arg(proj_name)
         .output()
