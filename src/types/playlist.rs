@@ -9,17 +9,20 @@ use types::{Config, PlaylistItem};
 use utils;
 
 
+/// Maps to playlist JSON
 #[derive(Debug, RustcDecodable, RustcEncodable)]
 pub struct Playlist {
     pub name: String,
-    pub items: Vec<PlaylistItem>
+    pub items: Vec<Box<PlaylistItem>>
 }
 
 impl fmt::Display for Playlist {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (i, item) in self.items.iter().cloned().enumerate() {
             if item.path.is_some() && item.music.is_some() {
-                try!(write!(f, "({}) Sequence: ({}, {})\n", i, item.path.unwrap(), item.music.unwrap()))
+                let path = item.clone().path.unwrap();
+                let music = item.music.unwrap();
+                try!(write!(f, "({}) Sequence: ({}, {})\n", i, path, music))
             } else if item.path.is_some() {
                 try!(write!(f, "({}) Pattern: {}\n", i, item.path.unwrap()))
             } else if item.music.is_some() {
@@ -74,9 +77,9 @@ impl Playlist {
             let end = self.items.len();
             // TODO: Make error
             println!("Cannot insert past index=len(items). Changing index {} to {}", idx, end);
-            self.items.insert(end, item);
+            self.items.insert(end, Box::new(item));
         } else {
-            self.items.insert(idx, item);
+            self.items.insert(idx, Box::new(item));
         }
 
         // Write updated playlist to file

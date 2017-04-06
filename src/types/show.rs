@@ -2,12 +2,12 @@ use rustc_serialize::json;
 
 use DmxOutput;
 use error::Error;
-use types::{Config, Playlist, PreparedPlaylistItem};
+use types::{Config, Playlist, Runnable};
 use utils;
 
 
 pub struct Show {
-    playlist: Vec<PreparedPlaylistItem>,
+    playlist: Vec<Box<Runnable>>,
     dmx: DmxOutput
 }
 
@@ -21,21 +21,24 @@ impl Show {
         println!("Reading playlist");
         let plist_path = Playlist::get_path(cfg, proj_name);
         let plist_json = try!(utils::file_as_string(&plist_path));
-        let plist: Playlist = try!(json::decode(&plist_json).map_err(Error::JsonDecode));
+        let mut plist: Playlist = try!(json::decode(&plist_json).map_err(Error::JsonDecode));
 
         println!("Prepping the show");
-        let prepped_show = plist.items.into_iter()
+        // Setup playlist items
+        let runnable_plist = plist.items.iter_mut()
             .skip(offset as usize)
-            .map(|show_item| match show_item.prepare() {
-                Ok(prepped) => prepped,
-                Err(e) => { panic!(e); }
+            .map(|mut plist_item| match plist_item.to_runnable() {
+                Ok(r) => r,
+                Err(e) => panic!("{}", e)
             })
-            .collect::<Vec<PreparedPlaylistItem>>();
-
-        Ok(Show {
+            .collect::<Vec<Box<Runnable>>>();
+        
+        let show = Show {
             dmx: dmx,
-            playlist: prepped_show
-        })
+            playlist: runnable_plist
+        };
+
+        Ok(show)
     }
 
     pub fn run(mut self) -> Result<(), Error> {

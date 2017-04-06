@@ -4,18 +4,32 @@ use std::time::Duration;
 
 use DmxOutput;
 use error::Error;
-use types::SequenceData;
+use types::{Runnable, SequenceData};
+use utils;
 
 
 pub struct Pattern {
-    pattern: SequenceData
+	seq_data: SequenceData
 }
 
 impl Pattern {
-    
-    pub fn run(dmx: &mut DmxOutput, data: &SequenceData) -> Result<(), Error> {
+	pub fn new(seq_path: String) -> Result<Pattern, Error> {
+		// TODO check if path exists
+        let data = try!(utils::load_sequence_data(&seq_path));
 
-        println!("Running pattern");
+		Ok(Pattern {
+			seq_data: data
+		})
+
+	}
+}
+
+impl Runnable for Pattern {
+	/// Run the playlist item
+	fn run(self: Box<Self>, dmx: &mut DmxOutput) -> Result<(), Error> {
+		println!("Running pattern");
+
+        let data = self.seq_data;
 
         // Create channels for clock thread tx/rx
         let (tx, rx) = mpsc::channel();
@@ -44,5 +58,5 @@ impl Pattern {
         }
         println!("Done.");
         Ok(())
-    }
+	}
 }

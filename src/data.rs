@@ -1,5 +1,5 @@
 use rustc_serialize::json;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::Write;
 use std::process::Command;
 use std::str;
@@ -67,14 +67,6 @@ fn get_data(proj_name: &str) -> Result<Vec<SequenceData>, Error> {
     Ok(transposed_data)
 }
 
-/// Gets the path to the project's output directory
-fn get_project_output_dir(cfg: &Config, proj_name: &str) -> String {
-    let mut proj_dir = cfg.output_dir.clone();
-    proj_dir.push_str(proj_name);
-    proj_dir.push_str(&"/");
-    proj_dir
-}
-
 /// Update the local copy of the show's sequence data
 pub fn update_data(cfg: &Config, proj_name: &str) -> Result<(), Error> {
     
@@ -109,7 +101,8 @@ pub fn update_data(cfg: &Config, proj_name: &str) -> Result<(), Error> {
             Some(seq_output_path),
             seq_music_path,
             None::<u32>));
-        plist_items.push(plist_item);
+        
+        plist_items.push(Box::new(plist_item));
     }
 
     // Make playlist object

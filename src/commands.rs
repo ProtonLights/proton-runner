@@ -3,7 +3,7 @@ use error::Error;
 
 
 pub fn range_on(dmx: &mut DmxOutput, start: u32, end: u32) -> Result<(), Error> {
-    let mut first_part = vec![0; start as usize - 1];
+    let first_part = vec![0; start as usize - 1];
     let mut on_part = vec![255; (end - start + 1) as usize];
     let mut last_part = vec![0; 512 - end as usize];
 
@@ -16,7 +16,7 @@ pub fn range_on(dmx: &mut DmxOutput, start: u32, end: u32) -> Result<(), Error> 
 
 pub fn range_off(dmx: &mut DmxOutput, start: u32, end: u32) -> Result<(), Error> {
 
-    let mut first_part = vec![255; start as usize - 1];
+    let first_part = vec![255; start as usize - 1];
     let mut on_part = vec![0; (end - start + 1) as usize];
     let mut last_part = vec![255; 512 - end as usize];
 

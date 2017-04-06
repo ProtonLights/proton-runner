@@ -1,21 +1,34 @@
 use sfml::audio;
 use sfml::system::{Time, sleep};
 
-use commands;
 use DmxOutput;
 use error::Error;
-use utils;
-
+use types::Runnable;
 
 pub struct Music {
-    music: audio::Music
+	music: audio::Music
 }
 
 impl Music {
+	pub fn new(music_path: String) -> Result<Music, Error> {
+		// TODO check if path exists
+        let music = match audio::Music::new_from_file(&music_path) {
+            Some(mm) => mm,
+            None => return Err(Error::MusicError("Creating rsfml music object failed".to_string()))
+        };
 
-    pub fn run(music: &mut audio::Music) -> Result<(), Error> {
+		Ok(Music {
+			music: music
+		})
+	}
+}
 
-        println!("Playing music");
+impl Runnable for Music {
+	/// Run the playlist item
+	#[allow(unused_variables)]
+	fn run(self: Box<Self>, dmx: &mut DmxOutput) -> Result<(), Error> {
+		println!("Playing music");
+		let mut music = self.music;
 
         // Play music
         music.play();
@@ -27,5 +40,5 @@ impl Music {
         }
 
         Ok(())
-    }
+	}
 }
