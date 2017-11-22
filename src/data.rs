@@ -28,23 +28,23 @@ fn get_data(proj_name: &str) -> Result<Vec<SequenceData>, Error> {
         return Err(Error::ProtonCli(err_str.to_string()));
     }
     
-    // Make sure data starts like JSON
-    let output_str = str::from_utf8(&output.stdout).expect("Playlist data not valid UTF-8").trim();
-    let outputs = output_str.split("PLAYLIST_DATA:::").collect::<Vec<&str>>();
-    if outputs.len() != 2 {
-        return Err(Error::ProtonCli("Invalid output returned from cli".to_string()));
-    }
-    let plist_data_json = outputs[1];
+    // proton_cli returns the path to a json data file with everything inside
+    let data_file_path = str::from_utf8(&output.stdout)
+        .expect("Playlist data file path not valid UTF-8")
+        .split("PLAYLIST_DATA:::")
+        .nth(1)
+        .expect("Invalid output format from proton_cli (expected PLAYLIST_DATA:::)")
+        .trim();
 
-    if &plist_data_json[0..2] != "[{" {
-        return Err(Error::ProtonCli("Returned data not valid".to_string()));
-    }
+    // Read data from the data file
+    let plist_data_json = utils::file_as_string(data_file_path)?;
 
     println!("Parse JSON...");
     // get-playlist-data outputs just the JSON playlist data (as of 11/27/2016),
     // so we just grab the output and call it good
     let plist_data: Vec<SequenceData> = try!(
-        json::decode(plist_data_json).map_err(Error::JsonDecode));
+        json::decode(&plist_data_json)
+        .map_err(Error::JsonDecode));
 
     println!("Transposing data...");
     // Transpose data to frame-major order for easier use later
