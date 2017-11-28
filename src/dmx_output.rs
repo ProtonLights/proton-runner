@@ -3,18 +3,28 @@ use std::io::Write;
 use error::Error;
 use rserial;
 
-pub struct DmxOutput {
+pub trait DmxOutput {
+    fn send(&mut self, values: &Vec<u16>) -> Result<(), Error>;
+}
+
+pub struct Stdout;
+
+impl DmxOutput for Stdout {
+    fn send(&mut self, values: &Vec<u16>) -> Result<(), Error> {
+        println!("{:?}", values);
+        Ok(())
+    }
+}
+
+pub struct Live {
     serial: rserial::SystemPort
 }
 
-
-impl DmxOutput {
+impl Live {
     /// Create a new Dmx outputter for a device located at port
-    pub fn new(port: &str) -> Result<DmxOutput, Error> {
+    pub fn new(port: &str) -> Result<Live, Error> {
         let serial = try!(rserial::open(port).map_err(Error::Serial));
-        Ok(DmxOutput {
-            serial: serial
-        })
+        Ok(Live { serial: serial })
     }
 
     /// Formulate frame to send to Enttec USB DMX Pro
@@ -36,9 +46,11 @@ impl DmxOutput {
             Ok(())
         }
     }
+}
 
+impl DmxOutput for Live {
     /// Send array of up to 512 channels to DMX
-    pub fn send(&mut self, values: &Vec<u16>) -> Result<(), Error> {
+    fn send(&mut self, values: &Vec<u16>) -> Result<(), Error> {
         if values.len() > 512 { // TODO: Multiple universes
             // println!("More than 512 channels given ({}); ignoring all past 512", values.len());
         }
