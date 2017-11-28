@@ -38,6 +38,7 @@ impl DmxOutput {
     }
 
     /// Send array of up to 512 channels to DMX
+    /// Values should have the first index be 0, since DMX starts at 1
     pub fn send(&mut self, values: &Vec<u16>) -> Result<(), Error> {
         if values.len() > 513 { // TODO: Multiple universes
             println!("More than 512 dmx channels given ({}); ignoring all past 512", values.len());
@@ -45,15 +46,14 @@ impl DmxOutput {
 
         // Make values u8
         let mut values_u8 = values.iter()
-            .skip(1) // Skip dmx channel 0 (doesn't exist)
             .map(|val| *val as u8)
             .collect::<Vec<u8>>();
 
         // Limit to 512 channels for now
         values_u8.truncate(512);
 
-        // First value is always 0 (DMX starts at 1)
-        let mut data = vec![0];
+        // First value should be 0. Assume values given have that in mind
+        let mut data = Vec::new();
         data.append(&mut values_u8);
         
         // Fill up the channels up to the minimum of 25
