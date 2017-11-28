@@ -50,9 +50,10 @@ impl Live {
 
 impl DmxOutput for Live {
     /// Send array of up to 512 channels to DMX
+    /// Values should have the first index be 0, since DMX starts at 1
     fn send(&mut self, values: &Vec<u16>) -> Result<(), Error> {
-        if values.len() > 512 { // TODO: Multiple universes
-            // println!("More than 512 channels given ({}); ignoring all past 512", values.len());
+        if values.len() > 513 { // TODO: Multiple universes
+            println!("More than 512 dmx channels given ({}); ignoring all past 512", values.len());
         }
 
         // Make values u8
@@ -63,8 +64,8 @@ impl DmxOutput for Live {
         // Limit to 512 channels for now
         values_u8.truncate(512);
 
-        // First value is always 0 (DMX starts at 1)
-        let mut data = vec![0];
+        // First value should be 0. Assume values given have that in mind
+        let mut data = Vec::new();
         data.append(&mut values_u8);
         
         // Fill up the channels up to the minimum of 25
