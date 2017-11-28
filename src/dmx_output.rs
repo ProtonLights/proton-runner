@@ -39,12 +39,13 @@ impl DmxOutput {
 
     /// Send array of up to 512 channels to DMX
     pub fn send(&mut self, values: &Vec<u16>) -> Result<(), Error> {
-        if values.len() > 512 { // TODO: Multiple universes
-            // println!("More than 512 channels given ({}); ignoring all past 512", values.len());
+        if values.len() > 513 { // TODO: Multiple universes
+            println!("More than 512 dmx channels given ({}); ignoring all past 512", values.len());
         }
 
         // Make values u8
         let mut values_u8 = values.iter()
+            .skip(1) // Skip dmx channel 0 (doesn't exist)
             .map(|val| *val as u8)
             .collect::<Vec<u8>>();
 
