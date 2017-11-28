@@ -1,4 +1,4 @@
-
+use dmx_output::DmxOutput;
 use error::Error;
 use types::{Delay, Music, Pattern, Runnable, Sequence};
 
@@ -28,8 +28,9 @@ impl PlaylistItem {
         }
     }
 
-    pub fn to_runnable(&mut self) -> Result<Box<Runnable>, Error> {
+    pub fn to_runnable<D>(&mut self) -> Result<Box<Runnable<D>>, Error> where D: DmxOutput {
         let me = self.clone();
+
         if me.path.is_some() && me.music.is_some() {
             let runnable = try!(Sequence::new(me.path.unwrap(), me.music.unwrap()));
             Ok(Box::new(runnable))

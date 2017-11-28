@@ -2,7 +2,7 @@ use std::thread;
 use std::time::Duration;
 
 use commands;
-use DmxOutput;
+use dmx_output::DmxOutput;
 use error::Error;
 use types::Runnable;
 
@@ -18,9 +18,9 @@ impl Delay {
 	}
 }
 
-impl Runnable for Delay {
+impl <D: DmxOutput> Runnable<D> for Delay {
 	/// Run the playlist item
-	fn run(self: Box<Self>, dmx: &mut DmxOutput) -> Result<(), Error> {
+	fn run(&mut self, dmx: &mut D) -> Result<(), Error> {
 		println!("Playing delay");
 
     	try!(commands::all_off(dmx));
