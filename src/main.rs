@@ -155,12 +155,16 @@ fn run_run_show(args: Args, cfg: Config) -> Result<(), Error> {
     let dmx_port = args.arg_dmx_port.unwrap();
     let plist_offset = args.arg_plist_offset.unwrap_or(0);
 
-    // let dmx = dmx_output::Stdout;
-    let dmx = dmx_output::Live::new(&dmx_port)?;
-    let show = try!(Show::new(&cfg, &proj_name, plist_offset));
-    println!("Ready!");
-
-    proton_runner::repl::repl(dmx, show)
+    if dmx_port == "-" {
+        let dmx = dmx_output::Stdout;
+        let show = try!(Show::new(&cfg, &proj_name, plist_offset));
+        proton_runner::repl::repl(dmx, show)
+    }
+    else {
+        let dmx = dmx_output::Live::new(&dmx_port)?;
+        let show = try!(Show::new(&cfg, &proj_name, plist_offset));
+        proton_runner::repl::repl(dmx, show)
+    }
 }
 
 fn run_set(args: Args, cfg: Config) -> Result<(), Error> {
