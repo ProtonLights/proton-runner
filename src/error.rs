@@ -1,4 +1,6 @@
+use std::convert::From;
 use rustc_serialize::json;
+use rustyline::error::ReadlineError;
 use rserial;
 use std::{io, error, fmt};
 use toml;
@@ -22,6 +24,7 @@ pub enum Error {
     ProtonCli(String),
     Rsfml(String),
     Serial(rserial::Error),
+    Readline(ReadlineError),
     TodoErr,
     TomlParseError(toml::ParserError)
 }
@@ -45,6 +48,7 @@ impl error::Error for Error {
             Error::ProtonCli(_) => "proton_cli error occurred",
             Error::Rsfml(_) => "Rsfml error occurred",
             Error::Serial(_) => "Serial error occurred",
+            Error::Readline(_) => "Readline error occurred",
             Error::TodoErr => "Todo",
             Error::TomlParseError(_) => "Toml parsing error occurred",
         }
@@ -68,6 +72,7 @@ impl error::Error for Error {
             Error::ProtonCli(_) => None,
             Error::Rsfml(_) => None,
             Error::Serial(ref err) => Some(err),
+            Error::Readline(ref err) => Some(err),
             Error::TodoErr => None,
             Error::TomlParseError(ref err) => Some(err),
        }
@@ -109,9 +114,17 @@ impl fmt::Display for Error {
                 "Rsfml error: {}", description),
             Error::Serial(ref err) => write!(f,
                 "Serial error occured: {}", err),
+            Error::Readline(ref err) => write!(f,
+                "Readline error occured: {}", err),
             Error::TodoErr => write!(f, "TodoErr"),
             Error::TomlParseError(ref err) => write!(f,
                 "Toml parsing error occurred: {}", err),
         }
+    }
+}
+
+impl From<ReadlineError> for Error {
+    fn from(err: ReadlineError) -> Self {
+        Error::Readline(err)
     }
 }

@@ -2,18 +2,18 @@
 #![allow(unused_variables)]
 
 extern crate docopt;
+extern crate rustyline;
 extern crate proton_runner;
 extern crate rustc_serialize;
 extern crate sfml;
 
-use std::{env, io};
+use std::env;
 
 use docopt::Docopt;
 
-use proton_runner::DmxOutput;
+use proton_runner::dmx_output;
 use proton_runner::error::Error;
 use proton_runner::types::{Config, Playlist, Show};
-
 
 const USAGE: &'static str = "
 Command-line interface for Proton
@@ -103,7 +103,7 @@ fn run_add_playlist_item(args: Args, cfg: Config) -> Result<(), Error> {
 fn run_all_on(args: Args, cfg: Config) -> Result<(), Error> {
     let dmx_port = args.arg_dmx_port.unwrap();
     
-    let mut dmx = try!(DmxOutput::new(&dmx_port));
+    let mut dmx = try!(dmx_output::Live::new(&dmx_port));
     
     proton_runner::commands::all_on(&mut dmx)
 }
@@ -111,7 +111,7 @@ fn run_all_on(args: Args, cfg: Config) -> Result<(), Error> {
 fn run_all_off(args: Args, cfg: Config) -> Result<(), Error> {
     let dmx_port = args.arg_dmx_port.unwrap();
     
-    let mut dmx = try!(DmxOutput::new(&dmx_port));
+    let mut dmx = try!(dmx_output::Live::new(&dmx_port));
     
     proton_runner::commands::all_off(&mut dmx)
 }
@@ -127,11 +127,9 @@ fn run_range_on(args: Args, cfg: Config) -> Result<(), Error> {
     let chan_start = args.arg_chan_start.unwrap();
     let chan_end = args.arg_chan_end.unwrap();
     
-    let mut dmx = try!(DmxOutput::new(&dmx_port));
-    let start = dmx_bounded(chan_start);
-    let end = dmx_bounded(chan_end);
+    let mut dmx = try!(dmx_output::Live::new(&dmx_port));
 
-    proton_runner::commands::range_on(&mut dmx, start, end)
+    proton_runner::commands::range_on(&mut dmx, chan_start, chan_end)
 }
 
 fn run_range_off(args: Args, cfg: Config) -> Result<(), Error> {
@@ -139,11 +137,9 @@ fn run_range_off(args: Args, cfg: Config) -> Result<(), Error> {
     let chan_start = args.arg_chan_start.unwrap();
     let chan_end = args.arg_chan_end.unwrap();
     
-    let mut dmx = try!(DmxOutput::new(&dmx_port));
-    let start = dmx_bounded(chan_start);
-    let end = dmx_bounded(chan_end);
+    let mut dmx = try!(dmx_output::Live::new(&dmx_port));
 
-    proton_runner::commands::range_off(&mut dmx, start, end)
+    proton_runner::commands::range_off(&mut dmx, chan_start, chan_end)
 }
 
 fn run_remove_playlist_item(args: Args, cfg: Config) -> Result<(), Error> {
@@ -158,25 +154,20 @@ fn run_run_show(args: Args, cfg: Config) -> Result<(), Error> {
     let proj_name = args.arg_proj_name.unwrap();
     let dmx_port = args.arg_dmx_port.unwrap();
     let plist_offset = args.arg_plist_offset.unwrap_or(0);
-    let show = try!(Show::new(&cfg, &proj_name, &dmx_port, plist_offset));
+
+    let dmx = dmx_output::Stdout;
+    // let dmx = dmx_output::Live::new(&dmx_port);
+    let show = try!(Show::new(&cfg, &proj_name, plist_offset));
     println!("Ready!");
 
-    // Wait for user to run
-    let mut input = String::new();
-    try!(io::stdin().read_line(&mut input).map_err(Error::Io));
-    match input.trim() {
-        "run" => show.run(),
-        "quit" => Ok(()),
-        _ => Ok(println!("Invalid command (must be run or quit)"))
-    }
+    proton_runner::repl::repl(dmx, show)
 }
 
 fn run_set(args: Args, cfg: Config) -> Result<(), Error> {
-
     let dmx_port = args.arg_dmx_port.unwrap();
     let dmx_chan = args.arg_dmx_chan.unwrap();
     
-    let mut dmx = try!(DmxOutput::new(&dmx_port));
+    let mut dmx = try!(dmx_output::Live::new(&dmx_port));
 
     if args.cmd_on {
         proton_runner::commands::range_on(&mut dmx, dmx_chan, dmx_chan)
@@ -190,11 +181,4 @@ fn run_set(args: Args, cfg: Config) -> Result<(), Error> {
 fn run_update_data(args: Args, cfg: Config) -> Result<(), Error> {
     let proj_name = args.arg_proj_name.unwrap();
     proton_runner::data::update_data(&cfg, &proj_name)
-}
-
-/// Bind value to range [1, 512]
-fn dmx_bounded(unbounded: u32) -> u32 {
-    if unbounded < 1 { 1 }
-    else if unbounded > 512 { 512 }
-    else { unbounded }
 }

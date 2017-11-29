@@ -2,7 +2,7 @@ use sfml::audio;
 use std::thread;
 use std::time::Duration;
 
-use DmxOutput;
+use dmx_output::DmxOutput;
 use error::Error;
 use types::{Runnable, SequenceData};
 use utils;
@@ -25,29 +25,26 @@ impl Sequence {
 			seq_data: data,
 			music: music
 		})
-
 	}
 }
 
-impl Runnable for Sequence {
+impl <D: DmxOutput> Runnable<D> for Sequence {
 	/// Run the playlist item
-	fn run(self: Box<Self>, dmx: &mut DmxOutput) -> Result<(), Error> {
+	fn run(&mut self, dmx: &mut D) -> Result<(), Error> {
 		println!("Running sequence");
 
-		let mut me = *self;
-
-        let num_frames = me.seq_data.num_frames;
-        let music_dur = me.music.duration().as_milliseconds();
+        let num_frames = self.seq_data.num_frames;
+        let music_dur = self.music.duration().as_milliseconds();
         let music_frame_dur = music_dur as f32 / num_frames as f32;
 
         // Play music
-        me.music.play();
+        self.music.play();
 
         loop {            
-            let frame = (me.music.playing_offset().as_milliseconds() as f32 / music_frame_dur) as u32;
+            let frame = (self.music.playing_offset().as_milliseconds() as f32 / music_frame_dur) as u32;
 
             if frame < num_frames {
-                let d = &me.seq_data.data[frame as usize];
+                let d = &self.seq_data.data[frame as usize];
                 match dmx.send(d) {
                     Ok(_) => (),
                     Err(e) => println!("\tError: {}", e),
@@ -55,7 +52,7 @@ impl Runnable for Sequence {
             }
 
             // Stop when music done or past last frame
-            if me.music.status() == audio::SoundStatus::Stopped {
+            if self.music.status() == audio::SoundStatus::Stopped {
                 break;
             }
 
