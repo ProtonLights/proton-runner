@@ -31,7 +31,7 @@ impl <D: DmxOutput> Runnable<D> for Delay {
         // We'll short a little, but never more than 15 ms.
         let steps = self.duration_ms / 15;
 
-        for i in 0..steps {
+        for _ in 0..steps {
             if should_end(sigint) {
                 return Ok(Status::Interrupted);
             }

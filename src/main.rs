@@ -16,8 +16,9 @@ use docopt::Docopt;
 use chan_signal::Signal;
 
 use proton_runner::dmx_output;
+use proton_runner::dmx_output::DmxOutput;
 use proton_runner::error::Error;
-use proton_runner::types::{Config, Playlist, Show, show};
+use proton_runner::types::{Config, Playlist, show};
 
 const USAGE: &'static str = "
 Command-line interface for Proton
@@ -160,9 +161,9 @@ fn run_run_show(args: Args, cfg: Config) -> Result<(), Error> {
     let dmx_port = args.arg_dmx_port.unwrap();
 
     if dmx_port == "-" {
-        start_repl(&cfg, &proj_name, dmx_output::Stdout);
+        start_repl(&cfg, &proj_name, dmx_output::Stdout)
     } else {
-        start_repl(&cfg, &proj_name, dmx_output::Live::new(&dmx_port)?);
+        start_repl(&cfg, &proj_name, dmx_output::Live::new(&dmx_port)?)
     }
 }
 
@@ -172,8 +173,8 @@ fn start_repl<D>(cfg: &Config, proj_name: &str, dmx: D) -> Result<(), Error> whe
     // adjusted before any threads are spawned.
     let sigint = chan_signal::notify(&[Signal::INT]);
 
-    let playlist = read_playlist(cfg, proj_name)?;
-    let runnables = load_playlist_items(playlist)?;
+    let playlist = show::read_playlist(cfg, proj_name)?;
+    let runnables = show::load_playlist_items(playlist)?;
         
     proton_runner::repl::repl(dmx, (sigint, runnables))
 }

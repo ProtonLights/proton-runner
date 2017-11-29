@@ -7,6 +7,12 @@ use rustyline::error::ReadlineError;
 use chan::Receiver;
 use chan_signal::Signal;
 
+struct State<D: DmxOutput> {
+    dmx: D,
+    show: Show<D>,
+    item_index: u32,
+}
+
 const HISTORY_FILE: &str = "history.txt";
 
 pub fn repl<D>(mut dmx: D, mut show: Show<D>) -> Result<(), Error> where D: DmxOutput {
@@ -15,6 +21,8 @@ pub fn repl<D>(mut dmx: D, mut show: Show<D>) -> Result<(), Error> where D: DmxO
     rl.load_history(HISTORY_FILE)?;
     rl.set_history_max_len(100);
 
+    let mut state = State { dmx: dmx, show: show, item_index: 0 };
+
     loop {
         let readline = rl.readline(">> ");
         match readline {
@@ -22,7 +30,7 @@ pub fn repl<D>(mut dmx: D, mut show: Show<D>) -> Result<(), Error> where D: DmxO
                 let tokens: Vec<&str> = line.trim().split_whitespace().collect();
                 if !line.is_empty() {
                     rl.add_history_entry(&line);
-                    execute(&mut dmx, &mut show, tokens)?;
+                    execute(&mut state, tokens)?;
                 }
             },
             Err(ReadlineError::Interrupted) => {
@@ -39,9 +47,10 @@ pub fn repl<D>(mut dmx: D, mut show: Show<D>) -> Result<(), Error> where D: DmxO
     Ok(())
 }
 
-fn execute<D: DmxOutput>(dmx: &mut D, show: &mut Show<D>, tokens: Vec<&str>) -> Result<(), Error> {
+fn execute<D: DmxOutput>(state: &mut State<D>, tokens: Vec<&str>) -> Result<(), Error> {
+    let dmx = &mut state.dmx;
     match tokens[0] {
-        "run" => show.run(dmx),
+        // "run" => run(state, tokens),
         "allon" => commands::all_on(dmx),
         "alloff" => commands::all_off(dmx),
         "seton" => seton(dmx, tokens),
@@ -51,6 +60,9 @@ fn execute<D: DmxOutput>(dmx: &mut D, show: &mut Show<D>, tokens: Vec<&str>) -> 
         unknown => Ok(println!("Unknown command: {}", unknown))
     }
 }
+
+// fn run<D: DmxOutput>(dmx: &mut D, show: &mut Show<D>, tokens: Vec<&str>) -> Result<(), Error> {
+// }
 
 fn print(message: &str) -> Result<(), Error> {
     println!("{}", message);
