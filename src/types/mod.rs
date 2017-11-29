@@ -1,14 +1,13 @@
-
 mod config;
 mod delay;
 mod music;
 mod pattern;
 mod playlist;
 mod playlist_item;
-mod runnable;
+pub mod runnable;
 mod sequence;
 mod sequence_data;
-mod show;
+pub mod show;
 
 pub use self::config::Config;
 pub use self::delay::Delay;

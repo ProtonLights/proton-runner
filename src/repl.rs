@@ -3,13 +3,16 @@ use commands;
 use error::Error;
 use dmx_output::DmxOutput;
 use rustyline::Editor;
+use rustyline::error::ReadlineError;
+use chan::Receiver;
+use chan_signal::Signal;
 
 const HISTORY_FILE: &str = "history.txt";
 
 pub fn repl<D>(mut dmx: D, mut show: Show<D>) -> Result<(), Error> where D: DmxOutput {
     // `()` can be used when no completer is required
     let mut rl = Editor::<()>::new();
-    try!(rl.load_history(HISTORY_FILE));
+    rl.load_history(HISTORY_FILE)?;
     rl.set_history_max_len(100);
 
     loop {
@@ -19,11 +22,14 @@ pub fn repl<D>(mut dmx: D, mut show: Show<D>) -> Result<(), Error> where D: DmxO
                 let tokens: Vec<&str> = line.trim().split_whitespace().collect();
                 if !line.is_empty() {
                     rl.add_history_entry(&line);
-                    try!(execute(&mut dmx, &mut show, tokens));
+                    execute(&mut dmx, &mut show, tokens)?;
                 }
             },
+            Err(ReadlineError::Interrupted) => {
+                continue
+            }
             Err(_) => {
-                // Ctrl-C, EOF, or any other circumstances
+                // EOF, or any other circumstances
                 break
             }
         }
@@ -31,6 +37,19 @@ pub fn repl<D>(mut dmx: D, mut show: Show<D>) -> Result<(), Error> where D: DmxO
     
     rl.save_history(HISTORY_FILE).unwrap();
     Ok(())
+}
+
+fn execute<D: DmxOutput>(dmx: &mut D, show: &mut Show<D>, tokens: Vec<&str>) -> Result<(), Error> {
+    match tokens[0] {
+        "run" => show.run(dmx),
+        "allon" => commands::all_on(dmx),
+        "alloff" => commands::all_off(dmx),
+        "seton" => seton(dmx, tokens),
+        "setoff" => setoff(dmx, tokens),
+        "rangeon" => rangeon(dmx, tokens),
+        "rangeoff" => rangeoff(dmx, tokens),
+        unknown => Ok(println!("Unknown command: {}", unknown))
+    }
 }
 
 fn print(message: &str) -> Result<(), Error> {
@@ -81,18 +100,5 @@ fn rangeoff<D: DmxOutput>(dmx: &mut D, tokens: Vec<&str>) -> Result<(), Error> {
             _ => print("End must parse to u32")
         },
         _ => print("Start must parse to u32"),
-    }
-}
-
-fn execute<D: DmxOutput>(dmx: &mut D, show: &mut Show<D>, tokens: Vec<&str>) -> Result<(), Error> {
-    match tokens[0] {
-        "run" => show.run(dmx),
-        "allon" => commands::all_on(dmx),
-        "alloff" => commands::all_off(dmx),
-        "seton" => seton(dmx, tokens),
-        "setoff" => setoff(dmx, tokens),
-        "rangeon" => rangeon(dmx, tokens),
-        "rangeoff" => rangeoff(dmx, tokens),
-        unknown => Ok(println!("Unknown command: {}", unknown))
     }
 }

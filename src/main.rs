@@ -17,7 +17,7 @@ use chan_signal::Signal;
 
 use proton_runner::dmx_output;
 use proton_runner::error::Error;
-use proton_runner::types::{Config, Playlist, Show};
+use proton_runner::types::{Config, Playlist, Show, show};
 
 const USAGE: &'static str = "
 Command-line interface for Proton
@@ -154,23 +154,28 @@ fn run_remove_playlist_item(args: Args, cfg: Config) -> Result<(), Error> {
 }
 
 fn run_run_show(args: Args, cfg: Config) -> Result<(), Error> {
-    // let _ = chan_signal::notify(&[Signal::INT]);
 
     // Prepare show
     let proj_name = args.arg_proj_name.unwrap();
     let dmx_port = args.arg_dmx_port.unwrap();
-    let plist_offset = args.arg_plist_offset.unwrap_or(0);
 
     if dmx_port == "-" {
-        let dmx = dmx_output::Stdout;
-        let show = try!(Show::new(&cfg, &proj_name, plist_offset));
-        proton_runner::repl::repl(dmx, show)
+        start_repl(&cfg, &proj_name, dmx_output::Stdout);
+    } else {
+        start_repl(&cfg, &proj_name, dmx_output::Live::new(&dmx_port)?);
     }
-    else {
-        let dmx = dmx_output::Live::new(&dmx_port)?;
-        let show = try!(Show::new(&cfg, &proj_name, plist_offset));
-        proton_runner::repl::repl(dmx, show)
-    }
+}
+
+fn start_repl<D>(cfg: &Config, proj_name: &str, dmx: D) -> Result<(), Error> where D: DmxOutput {
+    // Make sure we do this before making the runnables, because SFML may
+    // create new threads behind the scenes. Signal handlers need to be
+    // adjusted before any threads are spawned.
+    let sigint = chan_signal::notify(&[Signal::INT]);
+
+    let playlist = read_playlist(cfg, proj_name)?;
+    let runnables = load_playlist_items(playlist)?;
+        
+    proton_runner::repl::repl(dmx, (sigint, runnables))
 }
 
 fn run_set(args: Args, cfg: Config) -> Result<(), Error> {

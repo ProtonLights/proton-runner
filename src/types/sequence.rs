@@ -1,10 +1,13 @@
 use sfml::audio;
 use std::thread;
 use std::time::Duration;
+use chan::Receiver;
+use chan_signal::Signal;
 
 use dmx_output::DmxOutput;
 use error::Error;
 use types::{Runnable, SequenceData};
+use types::runnable::{should_end, Status};
 use utils;
 
 pub struct Sequence {
@@ -30,7 +33,7 @@ impl Sequence {
 
 impl <D: DmxOutput> Runnable<D> for Sequence {
 	/// Run the playlist item
-	fn run(&mut self, dmx: &mut D) -> Result<(), Error> {
+	fn run(&mut self, dmx: &mut D, sigint: &Receiver<Signal>) -> Result<Status, Error> {
 		println!("Running sequence");
 
         let num_frames = self.seq_data.num_frames;
@@ -53,14 +56,16 @@ impl <D: DmxOutput> Runnable<D> for Sequence {
 
             // Stop when music done or past last frame
             if self.music.status() == audio::SoundStatus::Stopped {
-                break;
+                return Ok(Status::Finished);
+            }
+
+            if should_end(sigint) {
+                self.music.stop();
+                return Ok(Status::Interrupted);
             }
 
             // Sleep for frame duration
             thread::sleep(Duration::from_millis(15));
         }
-
-        println!("Done.");
-        Ok(())
 	}
 }
