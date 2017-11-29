@@ -6,10 +6,14 @@ extern crate rustyline;
 extern crate proton_runner;
 extern crate rustc_serialize;
 extern crate sfml;
+extern crate chan;
+extern crate chan_signal;
 
 use std::env;
 
 use docopt::Docopt;
+
+use chan_signal::Signal;
 
 use proton_runner::dmx_output;
 use proton_runner::error::Error;
@@ -150,6 +154,8 @@ fn run_remove_playlist_item(args: Args, cfg: Config) -> Result<(), Error> {
 }
 
 fn run_run_show(args: Args, cfg: Config) -> Result<(), Error> {
+    // let _ = chan_signal::notify(&[Signal::INT]);
+
     // Prepare show
     let proj_name = args.arg_proj_name.unwrap();
     let dmx_port = args.arg_dmx_port.unwrap();
